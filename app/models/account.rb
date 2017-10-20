@@ -1,9 +1,9 @@
 class Account < ActiveRecord::Base
     # Non-persistent attributes
-    attr_accessor :remember_token
+    attr_accessor :remember_token, :activation_token
     # Account validation context
     VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i
-    before_create :confirmation_token
+    before_create :create_activation_digest
     before_save { self.email = email.downcase }
     validates :first_name, :last_name, presence: true, length: { maximum: 50 }
     validates :email, presence: true, 
@@ -23,16 +23,23 @@ class Account < ActiveRecord::Base
                                                       BCrypt::Engine.cost
         BCrypt::Password.create(string, cost: cost)
       end
+      
+      def new_token
+        SecureRandom.urlsafe_base64
+      end
     end
     
     def activate
-      self.confirmed = true
-      self.token = nil
-      save!(:validate => false)
+      update_attribute(:activated, true)
+      update_attribute(:activated_at, Time.zone.now)
+    end
+    
+    def send_activation_email
+      AccountMailer.registration_confirmation(self).deliver_now
     end
     
     def remember
-      self.remember_token = SecureRandom.urlsafe_base64
+      self.remember_token = Account.new_token
       update_attribute(:remember_digest, Account.digest(remember_token))
     end
     
@@ -40,9 +47,10 @@ class Account < ActiveRecord::Base
       update_attribute(:remember_digest, nil)
     end
     
-    def authenticated?(remember_token)
-      return false if remember_digest.nil?
-      BCrypt::Password.new(remember_digest).is_password?(remember_token)
+    def authenticated?(attribute, token)
+      digest = send("#{attribute}_digest")
+      return false if digest.nil?
+      BCrypt::Password.new(digest).is_password?(token)
     end
     
     private
@@ -53,10 +61,9 @@ class Account < ActiveRecord::Base
       end
     end
     
-    def confirmation_token
-      if self.token.blank?
-          self.token = SecureRandom.urlsafe_base64.to_s
-      end
+    def create_activation_digest
+      self.activation_token  = Account.new_token
+      self.activation_digest = Account.digest(activation_token)
     end
     
 end

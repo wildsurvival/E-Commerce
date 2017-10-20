@@ -14,7 +14,7 @@
 # Ignore secrets
 /config/secrets.yml
 /config/gateway_secrets.yml
-/config/environments/development.rb
+/config/mail_secrets.yml
 
 # Ignore all logfiles and tempfiles.
 /log/*

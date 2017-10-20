@@ -24,6 +24,8 @@ module Workspace
     config.active_record.raise_in_transactional_callbacks = true
     
     # Custom configuration objects
+    config.settings = config_for(:settings)
     config.gateway = config_for(:gateway_secrets)
+    config.mail = config_for(:mail_secrets)
   end
 end

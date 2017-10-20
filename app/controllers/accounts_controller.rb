@@ -9,7 +9,7 @@ class AccountsController < ApplicationController
   def create
     @account = Account.new(account_params)
     if @account.save
-      AccountMailer.registration_confirmation(@account).deliver
+      @account.send_activation_email
       flash[:success] = "<strong>Your account was created.</strong> Please confirm your email address to log in"
       redirect_to root_url
     else
@@ -18,19 +18,18 @@ class AccountsController < ApplicationController
   end
   
   def confirm
-    account = Account.find_by_token(params[:id])
-    if account
+    account = Account.find_by_email(params[:email])
+    if account && !account.activated? && account.authenticated?(:activation, params[:id])
       account.activate
       flash[:success] = "<strong>Success!</strong> Your email was verified"
       redirect_to root_url
+    elsif account.activated?
+      flash[:danger] = "This account is already activated!"
+      redirect_to root_url
     else
-      flash.now[:danger] = "Sorry, this confirmation token is incorrect"
+      flash[:danger] = "Sorry, this confirmation token is incorrect"
       redirect_to root_url
     end
-  end
-
-  # GET /accounts/1/edit
-  def edit
   end
   
   private

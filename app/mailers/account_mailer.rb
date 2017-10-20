@@ -3,6 +3,6 @@ class AccountMailer < ActionMailer::Base
 
     def registration_confirmation(account)
         @account = account
-        mail(:to => account.email, :subject => "E-Commerce - Confirm your account")
+        mail :to => account.email, :subject => "E-Commerce - Confirm your account"
     end
 end

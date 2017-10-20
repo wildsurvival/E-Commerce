@@ -1,0 +1,4 @@
+development:
+    host: http://e-commerce-aschoate.c9users.io
+test:
+production:
